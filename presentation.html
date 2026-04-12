@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>PCB Defect Detection Engine - Presentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Reveal.js Core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    
+    <!-- Reveal.js Dark Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/night.min.css" id="theme">
+    
+    <!-- Custom Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Custom NVIDIA Aesthetic Overrides -->
+    <style>
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif !important;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+        .reveal .accent {
+            color: #76b900; /* NVIDIA Green */
+        }
+        .reveal .box {
+            background-color: #1a1a1a;
+            border: 2px solid #76b900;
+            padding: 20px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-top: 20px;
+            display: inline-block;
+            box-shadow: 0px 0px 15px rgba(118, 185, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .reveal .box:hover {
+            box-shadow: 0px 0px 25px rgba(118, 185, 0, 0.5);
+            background-color: #222222;
+        }
+        .reveal p, .reveal li {
+            font-family: 'Inter', sans-serif !important;
+            color: #dddddd;
+            line-height: 1.6;
+        }
+        .reveal ul {
+            margin-top: 20px;
+        }
+        .reveal li {
+            margin-bottom: 15px;
+        }
+        .reveal a {
+            color: #76b900;
+            text-decoration: none;
+        }
+        .reveal a:hover {
+            color: #94da32;
+        }
+        
+        /* Progress Bar Override */
+        .reveal .progress span {
+            background-color: #76b900 !important;
+        }
+        /* Controls Override */
+        .reveal .controls {
+            color: #76b900 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section data-transition="zoom">
+                <h1>PCB Defect <br><span class="accent">Detection Engine</span></h1>
+                <p>AI-Powered Visual Inspection Prototype</p>
+                <div style="height: 30px;"></div>
+                <p style="color:#8c947d; font-size: 0.7em; letter-spacing: 2px;">POWERED BY YOLOv8 & STREAMLIT</p>
+            </section>
+
+            <!-- Problem Slide -->
+            <section data-transition="slide">
+                <h2>The Challenge</h2>
+                <hr style="border-color: #353535; width: 50%;">
+                <ul style="font-size: 0.8em;">
+                    <li>Printed Circuit Boards (PCBs) frequently suffer from micron-level manufacturing anomalies.</li>
+                    <li>Traditional manual inspection is slow, expensive, and prone to extreme human error.</li>
+                    <li>Micro-defects like <span class="accent">mouse bites</span>, <span class="accent">missing holes</span>, and <span class="accent">spurious copper</span> lead to catastrophic hardware failure later in production.</li>
+                </ul>
+            </section>
+
+            <!-- Solution Slide -->
+            <section data-transition="slide">
+                <h2>Our Solution</h2>
+                <p style="font-size: 0.9em;">An automated, end-to-end <strong>Computer Vision Dashboard</strong> designed specifically for brutal industrial environments.</p>
+                <div class="box" style="margin-top: 30px;">
+                    Instantly scans incoming PCB photography to detect, localize, and classify anomalies with extreme bounding-box precision.
+                </div>
+            </section>
+
+            <!-- Deep Dive Architecture -->
+            <section>
+                <section data-transition="slide-in fade-out">
+                    <h2>Under The Hood</h2>
+                    <p style="color: #76b900; font-weight: bold; font-family: 'Space Grotesk', sans-serif;">The YOLOv8 Architecture</p>
+                    <ul style="font-size: 0.8em;">
+                        <li>Trained on a comprehensive dataset of isolated PCB anomalies.</li>
+                        <li>Generates rapid coordinate mapping & strict confidence metrics.</li>
+                        <li>Capable of analyzing live imagery utilizing CPU or GPU fallback environments seamlessly.</li>
+                    </ul>
+                </section>
+                
+                <!-- Tech Stack Vertical Slide -->
+                <section data-transition="fade-in slide-out">
+                    <h2>Technology Stack</h2>
+                    <ul style="font-size: 0.85em;">
+                        <li><strong><span class="accent">Core Vision:</span></strong> OpenCV Headless, Ultralytics YOLOv8</li>
+                        <li><strong><span class="accent">Data Processing:</span></strong> PyTorch, Pandas, Numpy Core</li>
+                        <li><strong><span class="accent">Deployment:</span></strong> Streamlit Community Cloud (Python 3.11)</li>
+                    </ul>
+                </section>
+            </section>
+
+            <!-- UI/UX Features -->
+            <section data-transition="convex">
+                <h2>Dashboard UI/UX</h2>
+                <p>Built with a custom <span class="accent">Titan Precision</span> aesthetic:</p>
+                <ul style="font-size: 0.8em;">
+                    <li>Pure black backgrounds (`#000000`) for low eye-strain on the factory floor.</li>
+                    <li>High-contrast NVIDIA-inspired <span class="accent">Green (#76b900)</span> telemetry alerts.</li>
+                    <li>Dynamic, widescreen layout allowing side-by-side visualization and defect logging without scrolling.</li>
+                </ul>
+            </section>
+
+            <!-- Live Deployment Demo -->
+            <section data-transition="zoom" data-background-color="#141414">
+                <h2>Live Deployment</h2>
+                <p style="font-size: 0.8em; margin-bottom: 40px;">The engine is fully deployed, containerized, and accessible globally.</p>
+                <a href="https://pcb-defect-detection-engine.streamlit.app/" target="_blank">
+                    <div class="box" style="font-size: 1.1em; font-family: 'Space Grotesk', sans-serif; padding: 15px 40px;">
+                        LAUNCH LIVE DEMO
+                    </div>
+                </a>
+            </section>
+
+            <!-- Future Roadmap -->
+            <section data-transition="slide">
+                <h2>Moving Forward</h2>
+                <ul style="font-size: 0.8em;">
+                    <li>Direct integration into live factory overhead camera feeds.</li>
+                    <li>Expanding YOLOv8 weights for more granular defect classes (e.g. solder bridges).</li>
+                    <li>Building REST API endpoints for automated machine-to-machine rejection sorting.</li>
+                </ul>
+                <h3 style="margin-top:60px;" class="accent">Thank You!</h3>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Reveal.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        // Initialize the presentation with custom settings
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide' // none/fade/slide/convex/concave/zoom
+        });
+    </script>
+</body>
+</html>
