@@ -16,6 +16,37 @@ The interface is custom-engineered with a dark, brutalist "Titan Precision" desi
 - **YOLOv8 Inference Engine:** Fast and precise detection using state-of-the-art vision models tracking multiple defect classes.
 - **Dynamic Defect Log:** Full readout array of localized defect types categorized alongside their exact confidence percentages natively positioned next to the scan results.
 - **Industrial Dashboard UI:** Sleek, pure-black `#000000` theme with highly visible `#76b900` green accents.
+- **Explainable AI / Grad-CAM:** Generate an on-demand, detection-specific neural explanation for any defect in the log. The original detection, activation heatmap, and overlay are shown together with transparent CAM localization statistics.
+
+## Explainable AI (Grad-CAM)
+
+Grad-CAM is useful in PCB inspection because it makes the detector's visual evidence inspectable: it highlights image regions whose learned feature activations and gradients contributed to one selected defect prediction. It is a post-hoc explanation, not a measure of prediction correctness and not proof that a prediction is correct.
+
+The dashboard first runs normal YOLOv8 detection. When **Generate Explanation** is selected for a defect, it matches that post-NMS detection to the best corresponding raw YOLO prediction (class score × box IoU), backpropagates that selected class score, and uses gradient-weighted convolutional feature maps to make the CAM. This is deliberately generated only on demand.
+
+```text
+Input PCB Image
+        ↓
+YOLOv8 Detection
+        ↓
+Detected Defect → Selected Detection Target
+        ↓                    ↓
+Feature Activations + Gradients
+        ↓
+Grad-CAM → Heatmap → Overlay + Explanation
+```
+
+### Using XAI
+
+1. Upload a PCB image and click **Start Inspection**.
+2. In **07 / Explainable AI — Grad-CAM**, choose a `DEF-###` item from the detection log.
+3. Click **Generate Explanation**. Warm/bright areas are regions that contributed more strongly to that selected prediction.
+
+The existing **05 / Topographical Heatmap** remains a defect-density graphic made from detection boxes. It is not an XAI visualization. Grad-CAM is separately labelled and is generated from actual neural activations and gradients.
+
+### Limitations
+
+Grad-CAM has feature-map resolution limits and explains the selected model score, not ground truth. For overlapping/small defects, a raw anchor can be an imperfect proxy for the final NMS detection. It should support expert review, rather than replace it.
 
 ## Running Locally
 
