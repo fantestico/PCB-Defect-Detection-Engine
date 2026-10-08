@@ -11,7 +11,7 @@ from PIL import Image
 from ultralytics import YOLO
 
 from xai import GradCAMError, generate_detection_gradcam
-from xai.visualization import blend_cam, colorize_cam, draw_detection_box
+from xai.visualization import blend_cam, colorize_cam, crop_detection_context, draw_detection_box
 
 MODEL_PATH = Path("Colour.pt")
 st.set_page_config(layout="wide", page_title="PCB Defect Detection Engine", page_icon="⚙️")
@@ -72,18 +72,30 @@ def display_xai(model: YOLO, record: dict[str, object]) -> None:
     result = st.session_state.get("gradcam")
     if result is None or st.session_state.get("gradcam_id") != selected: return
     label = f"{detection['id']} {str(detection['class_name']).replace('_', ' ').title()}"
-    boxed = draw_detection_box(record["image_rgb"], detection["xyxy"], label)
-    overlay = draw_detection_box(blend_cam(record["image_rgb"], result.cam), detection["xyxy"], label)
+    context_image, context_cam, context_box = crop_detection_context(record["image_rgb"], result.cam, detection["xyxy"])
+    boxed = draw_detection_box(context_image, context_box, label)
+    overlay = draw_detection_box(blend_cam(context_image, context_cam), context_box, label)
     c1, c2, c3 = st.columns(3)
-    c1.image(boxed, caption="ORIGINAL // SELECTED DETECTION", use_container_width=True)
-    c2.image(colorize_cam(result.cam), caption="GRAD-CAM // NEURAL ACTIVATION", use_container_width=True)
-    c3.image(overlay, caption="OVERLAY // DETECTION + ACTIVATION", use_container_width=True)
+    c1.image(boxed, caption="DEFECT CONTEXT // SELECTED AREA", use_container_width=True)
+    c2.image(colorize_cam(context_cam), caption="WHY THE MODEL FOCUSED HERE", use_container_width=True)
+    c3.image(overlay, caption="MODEL ATTENTION // OVERLAY", use_container_width=True)
+    st.info("How to read this: red/yellow regions had the strongest positive influence on the selected defect prediction; blue regions had little influence. The green box is the defect reported by YOLO.")
+    with st.expander("View full-board Grad-CAM context"):
+        full_boxed = draw_detection_box(record["image_rgb"], detection["xyxy"], label)
+        full_overlay = draw_detection_box(blend_cam(record["image_rgb"], result.cam), detection["xyxy"], label)
+        f1, f2 = st.columns(2)
+        f1.image(full_boxed, caption="FULL PCB // SELECTED DETECTION", use_container_width=True)
+        f2.image(full_overlay, caption="FULL PCB // MODEL ATTENTION", use_container_width=True)
     st.markdown("#### Explanation statistics")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("CAM maximum", f"{result.max_activation:.3f}")
     m2.metric("Mean CAM inside box", f"{result.mean_inside_box:.3f}")
     m3.metric("Mean CAM outside box", f"{result.mean_outside_box:.3f}")
     m4.metric("CAM localization score", f"{result.localization_score:.1%}")
+    if result.mean_inside_box > result.mean_outside_box:
+        st.success("Interpretation: model attention is stronger inside the reported defect area than in the surrounding PCB.")
+    else:
+        st.warning("Interpretation: attention is diffuse or stronger outside this small defect box. Treat this prediction as a review cue, not strong localized visual evidence.")
     x1, y1, x2, y2 = map(float, detection["xyxy"])
     st.caption(f"Box: ({x1:.1f}, {y1:.1f}) → ({x2:.1f}, {y2:.1f}). Localization score is the fraction of total CAM activation inside this box, not accuracy. Target raw-anchor class score: {result.target_score:.3f}; feature layer: {result.layer_name}.")
 

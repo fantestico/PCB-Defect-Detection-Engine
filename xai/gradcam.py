@@ -59,6 +59,13 @@ def generate_detection_gradcam(
     parameter_states = [parameter.requires_grad for parameter in core.parameters()]
     for parameter in core.parameters():
         parameter.requires_grad_(True)
+    detection_head = getattr(core, "model", [None])[-1]
+    original_dynamic = getattr(detection_head, "dynamic", None)
+    if original_dynamic is not None:
+        # Rebuild cached anchors in normal autograd mode. A preceding
+        # model.predict call creates inference-mode anchors, which PyTorch
+        # cannot reuse in a backward graph.
+        detection_head.dynamic = True
 
     target_layer, layer_name = _find_target_layer(core)
     input_tensor, ratio, pad_x, pad_y = _preprocess(image_rgb, _model_input_size(core))
@@ -92,6 +99,8 @@ def generate_detection_gradcam(
         handle.remove()
         for parameter, required in zip(core.parameters(), parameter_states):
             parameter.requires_grad_(required)
+        if original_dynamic is not None:
+            detection_head.dynamic = original_dynamic
 
     if not activations or not gradients:
         raise GradCAMError("No activations or gradients were captured from the selected layer.")
@@ -118,9 +127,17 @@ def generate_detection_gradcam(
 
 
 def _find_target_layer(model: nn.Module) -> tuple[nn.Conv2d, str]:
-    """Choose a high-resolution feature convolution used by the Detect head."""
+    """Choose the finest class-branch feature convolution in a Detect head."""
     layers = getattr(model, "model", None)
     head = layers[-1] if isinstance(layers, nn.Sequential) and len(layers) else None
+    class_branches = getattr(head, "cv3", None)
+    if isinstance(class_branches, nn.ModuleList) and len(class_branches):
+        # The first branch is the finest detection grid. Its penultimate
+        # convolution feeds directly into the class-logit projection, making it
+        # more class-specific than a generic backbone/neck feature layer.
+        convs = [module for module in class_branches[0].modules() if isinstance(module, nn.Conv2d)]
+        if len(convs) >= 2:
+            return convs[-2], "detect.cv3[0].class_feature_conv"
     feature_indices = getattr(head, "f", None)
     if isinstance(feature_indices, (list, tuple)) and layers is not None:
         # The first detector feature has the finest spatial grid in YOLO heads.
@@ -155,8 +172,13 @@ def _preprocess(image_rgb: np.ndarray, size: tuple[int, int]) -> tuple[Tensor, f
     ratio = min(input_w / original_w, input_h / original_h)
     resized_w, resized_h = round(original_w * ratio), round(original_h * ratio)
     resized = cv2.resize(image_rgb, (resized_w, resized_h), interpolation=cv2.INTER_LINEAR)
-    canvas = np.full((input_h, input_w, 3), 114, dtype=np.uint8)
-    pad_x, pad_y = (input_w - resized_w) // 2, (input_h - resized_h) // 2
+    # Match Ultralytics LetterBox(auto=True): preserve aspect ratio and reduce
+    # padding to the detector stride instead of always forcing a square image.
+    stride = 32
+    total_pad_x = (input_w - resized_w) % stride
+    total_pad_y = (input_h - resized_h) % stride
+    canvas = np.full((resized_h + total_pad_y, resized_w + total_pad_x, 3), 114, dtype=np.uint8)
+    pad_x, pad_y = total_pad_x // 2, total_pad_y // 2
     canvas[pad_y : pad_y + resized_h, pad_x : pad_x + resized_w] = resized
     tensor = torch.from_numpy(canvas).permute(2, 0, 1).float().div(255.0).unsqueeze(0)
     return tensor, ratio, pad_x, pad_y
