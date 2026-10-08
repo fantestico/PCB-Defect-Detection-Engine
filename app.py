@@ -119,7 +119,10 @@ if record:
     try:
         model = load_model(str(MODEL_PATH)); detections = record["detections"]
         st.markdown("---"); st.success("INSPECTION COMPLETE")
-        st.warning(f"CRITICAL: {len(detections)} DEFECTS DETECTED.") if detections else st.info("STATUS OK: NO DEFECTS DETECTED. PCB PASSES INSPECTION.")
+        if detections:
+            st.warning(f"CRITICAL: {len(detections)} DEFECTS DETECTED.")
+        else:
+            st.info("STATUS OK: NO DEFECTS DETECTED. PCB PASSES INSPECTION.")
         a, b = st.columns([1.5, 1]); a.image(record["annotated"], caption="TARGET PCB // SCAN RESULTS", use_container_width=True)
         if detections:
             b.markdown("### 04 / Defect Log")
