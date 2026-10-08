@@ -28,9 +28,8 @@ def load_model(path: str) -> YOLO:
     return YOLO(path)
 
 
-def inspect(model: YOLO, image_rgb: np.ndarray, confidence_threshold: float) -> dict[str, object]:
-    """Run YOLO while filtering low-confidence predictions at the requested threshold."""
-    result = model.predict(image_rgb, conf=confidence_threshold, verbose=False)[0]
+def inspect(model: YOLO, image_rgb: np.ndarray) -> dict[str, object]:
+    result = model.predict(image_rgb, verbose=False)[0]
     detections: list[dict[str, object]] = []
     for i in range(len(result.boxes)):
         class_id = int(result.boxes.cls[i].item())
@@ -108,14 +107,6 @@ left, right = st.columns([1.5, 1])
 with right:
     st.markdown("### 01 / Control Panel")
     uploaded = st.file_uploader("Upload PCB Image (.jpg, .png)", type=["jpg", "jpeg", "png"])
-    confidence_threshold = st.slider(
-        "Minimum detection confidence",
-        min_value=0.25,
-        max_value=0.95,
-        value=0.50,
-        step=0.05,
-        help="Only detections at or above this real YOLO confidence are displayed. This does not alter the model's scores.",
-    )
     st.markdown("---"); st.markdown("### 02 / Telemetry")
     st.metric("Inference Device", "GPU (CUDA)" if torch.cuda.is_available() else "CPU", "Online")
     st.metric("Model Loaded", "Colour.pt", "Ready" if MODEL_PATH.is_file() else "Missing")
@@ -131,7 +122,7 @@ with left:
 if start and uploaded:
     try:
         with st.spinner("Analyzing Defect Signatures..."):
-            st.session_state.inspection = inspect(load_model(str(MODEL_PATH)), np.asarray(preview), confidence_threshold)
+            st.session_state.inspection = inspect(load_model(str(MODEL_PATH)), np.asarray(preview))
             st.session_state.pop("gradcam", None); st.session_state.pop("gradcam_id", None)
     except Exception as error: st.error(f"SYSTEM ERROR DURING INSPECTION: {error}")
 
@@ -140,7 +131,6 @@ if record:
     try:
         model = load_model(str(MODEL_PATH)); detections = record["detections"]
         st.markdown("---"); st.success("INSPECTION COMPLETE")
-        st.caption(f"Active minimum confidence threshold: {confidence_threshold:.0%}. Displayed scores are unchanged YOLO predictions.")
         if detections:
             st.warning(f"CRITICAL: {len(detections)} DEFECTS DETECTED.")
         else:
